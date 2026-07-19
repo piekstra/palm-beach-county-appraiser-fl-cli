@@ -1,0 +1,24 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Secrets — this tool needs none; keep it that way
+.env
+.env.*
+*.local
+*.secret
+*.token
+
+# Scraped pages / bulk exports — never commit real parcel data
+*.html
+*.csv
+*.geojson
+
+# Local tooling session state (twapp)
+.twapp-*.json
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

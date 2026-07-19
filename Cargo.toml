@@ -1,0 +1,40 @@
+[package]
+name = "palm-beach-county-appraiser-fl"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Look up Palm Beach County, FL property records — owner, parcel, values, exemptions, sales — from the command line. Public records, no credentials, agent-friendly, JSON-capable."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli"
+readme = "README.md"
+keywords = ["palm-beach", "property", "appraiser", "parcel", "public-records"]
+categories = ["command-line-utilities"]
+
+# Library + binary split: business logic lives in the library (testable, reusable);
+# `main.rs` is a thin binary that parses args and dispatches into `commands/`.
+[lib]
+name = "palm_beach_county_appraiser_fl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pbca"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+# `preserve_order` keeps DTO fields and table columns in the order they are
+# declared (pcn first, not alphabetized) instead of BTreeMap key order.
+serde_json = { version = "1", features = ["preserve_order"] }
+pk-cli-core = { git = "https://github.com/piekstra/cli-common", tag = "v0.2.0", features = ["reqwest"] }
+pk-cli-auth = { git = "https://github.com/piekstra/cli-common", tag = "v0.2.0" }
+pk-cli-config = { git = "https://github.com/piekstra/cli-common", tag = "v0.2.0" }
+pk-cli-http = { git = "https://github.com/piekstra/cli-common", tag = "v0.2.0" }
+pk-cli-selfupdate = { git = "https://github.com/piekstra/cli-common", tag = "v0.2.0" }
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "z"
