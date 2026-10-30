@@ -20,4 +20,4 @@ fmt-check:
 check: fmt-check lint test
 
 install:
-	cargo install --path .
+	cargo install --path . --locked
