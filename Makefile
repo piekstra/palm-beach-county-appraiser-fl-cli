@@ -1,26 +1,43 @@
-# Convenience targets for pbca.
+# pbca: build, test, lint and install, a cheap `smoke`, and the `verify` gate.
 
-.PHONY: build test lint fmt fmt-check check verify install
+BIN := pbca
+CARGO := cargo
 
+.PHONY: build release test lint fmt fmt-check check smoke verify install
+
+build: SIGN_TARGET = target/debug/$(BIN)
 build:
-	cargo build --release
+	$(CARGO) build
+	@$(SIGN)
+
+release: SIGN_TARGET = target/release/$(BIN)
+release:
+	$(CARGO) build --release --locked
+	@$(SIGN)
 
 test:
-	cargo test
+	$(CARGO) test --all --locked
 
 lint:
-	cargo clippy --all-targets -- -D warnings
+	$(CARGO) clippy --all-targets --locked -- -D warnings
 
 fmt:
-	cargo fmt --all
+	$(CARGO) fmt --all
 
 fmt-check:
-	cargo fmt --all -- --check
+	$(CARGO) fmt --all -- --check
 
 check: fmt-check lint test
 
-# The family's name for the pre-push gate; the same checks as `check`.
-verify: check
+# No network: version, help and discovery only.
+smoke: release
+	./target/release/$(BIN) --version
+	./target/release/$(BIN) --help > /dev/null
+	./target/release/$(BIN) info > /dev/null
+	./target/release/$(BIN) mcp --list-tools > /dev/null
+
+# The family's name for the pre-push gate.
+verify: fmt-check lint test smoke
 
 # `cargo install` ad-hoc signs, giving the binary a new code identity on every
 # install. Re-signing with the family's stable pk-cli-codesign identity keeps

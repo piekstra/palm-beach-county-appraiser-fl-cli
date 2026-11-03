@@ -12,6 +12,7 @@ pub mod config;
 pub mod details;
 pub mod error;
 pub mod formatter;
+pub mod mcp;
 pub mod model;
 pub mod pcn;
 pub mod update;

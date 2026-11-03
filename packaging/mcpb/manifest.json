@@ -1,0 +1,77 @@
+{
+  "manifest_version": "0.3",
+  "name": "pbca",
+  "display_name": "Palm Beach County property records (pbca)",
+  "version": "0.2.0",
+  "description": "Parcels, owners, values, sales and taxes from the Palm Beach County, Florida Property Appraiser's public records, through the open-source pbca CLI.",
+  "long_description": "Ask Claude who owns a parcel in Palm Beach County, Florida, what it is worth, what it sold for and what it was taxed. Four read-only tools: pbca_search, pbca_parcel, pbca_sales and pbca_taxes. Everything comes from the county's anonymous public records, so the extension asks for no account, key or password and touches no keychain. These records name real people: an owner's name is in every answer, and a mailing address or an exemption's applicant only when Claude asks for the detailed form. What the tools return reaches Claude as part of your conversation. The county's detail page is scraped, so a field it stops publishing goes missing. To set a default municipality, install the pbca CLI and run `pbca config set municipality <NAME>` in a terminal: the extension reads the same config file, unless you moved it with XDG_CONFIG_HOME in your shell. Unofficial; not affiliated with or endorsed by the Palm Beach County Property Appraiser or Palm Beach County.",
+  "author": {
+    "name": "piekstra",
+    "url": "https://github.com/piekstra"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli"
+  },
+  "homepage": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli",
+  "documentation": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli#use-with-claude",
+  "support": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli/issues",
+  "license": "MIT OR Apache-2.0",
+  "keywords": [
+    "property",
+    "parcel",
+    "palm beach county",
+    "florida",
+    "read-only"
+  ],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/pbca",
+    "mcp_config": {
+      "command": "${__dirname}/server/pbca",
+      "args": [
+        "mcp"
+      ],
+      "platform_overrides": {
+        "win32": {
+          "command": "${__dirname}/server/pbca.exe",
+          "args": [
+            "mcp"
+          ]
+        },
+        "linux": {
+          "command": "${__dirname}/server/linux/pbca",
+          "args": [
+            "mcp"
+          ]
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "pbca_search",
+      "description": "Find parcels by the start of a street address or an owner's name."
+    },
+    {
+      "name": "pbca_parcel",
+      "description": "One parcel's current record: owners, values, homestead and last sale."
+    },
+    {
+      "name": "pbca_sales",
+      "description": "Every recorded sale of one parcel, newest first."
+    },
+    {
+      "name": "pbca_taxes",
+      "description": "One parcel's values and total tax by year, and its exemptions."
+    }
+  ],
+  "tools_generated": false,
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ]
+  }
+}

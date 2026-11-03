@@ -15,9 +15,10 @@ public parcel data. Two sources, deliberately:
    history, ~10 years of tax rolls, year built, square footage. Powers `sales`,
    `taxes`, `building`, and `parcel --details`.
 
-Everything is anonymous public records: **no credentials, no keychain, no
+Everything is anonymous public records: **no credential for the county, no
 `auth login`**. `auth status` exists only because SPEC v1 requires it of every
-family member and reports `required: false`.
+family member and reports `required: false`. The keychain holds one thing, and
+only after `pbca mcp --new-token`: the bearer token of `pbca mcp --http`.
 
 Structured as a **library + thin binary**: logic lives in the
 `palm_beach_county_appraiser_fl` lib (`src/lib.rs`); `main.rs` only parses args
@@ -41,6 +42,10 @@ make check                      # all of the above
 - `src/lib.rs` — library root (declares the modules below).
 - `src/main.rs` — thin binary: parse args, build `Ctx`, dispatch to `commands`.
 - `src/cli.rs` — clap `Cli` / `Command` definitions. Tested.
+- `src/mcp.rs` — `pbca mcp`: four read-only tools over the client and parser,
+  through a `Source` seam. `src/mcp/tests.rs` drives them from
+  `tests/fixtures/`, which hold invented values only. Under 8,000 characters of
+  definitions together, which `assert_conforms` enforces.
 - `src/commands/` — one thin module per domain (`search`, `parcel`, `sales`,
   `taxes`, `building`, `api`, `auth`, `config`, `info`, `self_update`,
   `completions`); `mod.rs` holds `Ctx` and the `--limit` resolution order.
@@ -56,7 +61,8 @@ make check                      # all of the above
 - `src/config.rs` — non-secret preferences via `pk-cli-config`. Tested.
 - `src/update.rs` / `src/version.rs` — self-update wiring and build banner.
 - `docs/pbcpao-api.md` — the discovered API: endpoints, fields, gotchas. No PII.
-- `.github/workflows/release.yml` — tag `v*` → binaries `self-update` fetches.
+- `.github/workflows/release.yml` — tag `v*` → the tarballs `self-update` fetches and the `.mcpb`, drafted and then published once every asset is there. A PR touching packaging, the workflow or `Cargo.*` runs it as a dry run.
+- `packaging/mcpb/manifest.json` — the Claude Desktop extension, held to the binary by `tests/packaging.rs`.
 
 ## Gotchas & rules
 
@@ -118,7 +124,7 @@ commands, global `--json`, canonical DTOs (`auth-status/v1`, `self-update/v1`,
 
 - **Don't fork shared behavior.** Error/exit-code handling, output rendering,
   config storage, the HTTP client, and self-update come from the `pk-cli-*`
-  crates (tag-pinned git deps on cli-common, currently **v0.15.1**). If you need
+  crates (tag-pinned git deps on cli-common, currently **v0.25.0**). If you need
   a change there — or you're writing anything reusable across the family CLIs
   (fpl, xfin, lrfl, tojfl, …) — add it to cli-common, cut a tag, and bump the
   pin here. Never copy shared code into this repo.

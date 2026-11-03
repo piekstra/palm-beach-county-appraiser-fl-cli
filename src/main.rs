@@ -7,12 +7,17 @@ use clap::Parser;
 use palm_beach_county_appraiser_fl::cli::{AuthCmd, Cli, Command};
 use palm_beach_county_appraiser_fl::commands::{self, Ctx};
 use palm_beach_county_appraiser_fl::error::AppError;
+use palm_beach_county_appraiser_fl::mcp::{Live, PbcaTools};
 
 fn run(cli: &Cli) -> Result<(), AppError> {
     // `completions` needs only the clap command definition — no client, no
-    // config — so it is handled before any of that is built.
+    // config — so it is handled before any of that is built. `mcp` reads the
+    // config on each call, so listing its tools reads nothing.
     if let Command::Completions { shell } = &cli.command {
         return commands::completions::run(*shell);
+    }
+    if let Command::Mcp(args) = &cli.command {
+        return pk_cli_mcp::run(args, PbcaTools::new(Live));
     }
 
     let ctx = Ctx::new(cli)?;
@@ -32,7 +37,7 @@ fn run(cli: &Cli) -> Result<(), AppError> {
         Command::Config(cmd) => commands::config::run(&ctx, cmd),
         Command::Api(args) => commands::api::run(&ctx, args),
         Command::SelfUpdate(args) => commands::self_update::run(&ctx, args),
-        Command::Completions { .. } => unreachable!("handled above"),
+        Command::Completions { .. } | Command::Mcp(_) => unreachable!("handled above"),
     }
 }
 

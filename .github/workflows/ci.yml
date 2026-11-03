@@ -18,8 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # pbca stores no secrets, but the family auth crate links the Linux
-      # `keyring` backend (Secret Service), which needs libdbus at build time.
+        with:
+          persist-credentials: false
+      # The family auth crate links the Linux `keyring` backend (Secret Service),
+      # which needs libdbus at build time.
       - name: install system deps
         run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
       - uses: dtolnay/rust-toolchain@stable
@@ -29,11 +31,16 @@ jobs:
       - name: fmt
         run: cargo fmt --all -- --check
       - name: clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --all-targets --locked -- -D warnings
       - name: test
-        run: cargo test --all
+        run: cargo test --all --locked
       - name: build
-        run: cargo build --release
+        run: cargo build --release --locked
+      - name: smoke
+        run: |
+          ./target/release/pbca --version
+          ./target/release/pbca info > /dev/null
+          ./target/release/pbca mcp --list-tools > /dev/null
 
   security:
     name: audit / deny / secrets

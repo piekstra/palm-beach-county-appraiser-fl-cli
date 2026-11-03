@@ -1,8 +1,8 @@
 [package]
 name = "palm-beach-county-appraiser-fl"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
-rust-version = "1.88"
+rust-version = "1.89"
 description = "Look up Palm Beach County, FL property records — owner, parcel, values, exemptions, sales — from the command line. Public records, no credentials, agent-friendly, JSON-capable."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli"
@@ -28,11 +28,16 @@ serde = { version = "1", features = ["derive"] }
 # `preserve_order` keeps DTO fields and table columns in the order they are
 # declared (pcn first, not alphabetized) instead of BTreeMap key order.
 serde_json = { version = "1", features = ["preserve_order"] }
-pk-cli-core = { git = "https://github.com/piekstra/cli-common", tag = "v0.15.1", features = ["reqwest"] }
-pk-cli-auth = { git = "https://github.com/piekstra/cli-common", tag = "v0.15.1" }
-pk-cli-config = { git = "https://github.com/piekstra/cli-common", tag = "v0.15.1" }
-pk-cli-http = { git = "https://github.com/piekstra/cli-common", tag = "v0.15.1" }
-pk-cli-selfupdate = { git = "https://github.com/piekstra/cli-common", tag = "v0.15.1" }
+pk-cli-core = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0", features = ["reqwest"] }
+pk-cli-auth = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0" }
+pk-cli-config = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0" }
+pk-cli-http = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0" }
+pk-cli-selfupdate = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0" }
+pk-cli-mcp = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0", features = ["stdio", "http"] }
+schemars = "1"
+
+[dev-dependencies]
+pk-cli-mcp = { git = "https://github.com/piekstra/cli-common", tag = "v0.25.0", features = ["test-util"] }
 
 [profile.release]
 strip = true

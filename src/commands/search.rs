@@ -48,7 +48,7 @@ pub fn run(
 ///
 /// Returned separately from the request so it can be unit-tested — a
 /// malformed clause is the single most likely way this command breaks.
-fn build_query(
+pub(crate) fn build_query(
     normalized: &str,
     owner: bool,
     municipality: Option<&str>,

@@ -9,5 +9,5 @@ use crate::update;
 
 pub fn run(ctx: &Ctx, args: &SelfUpdateArgs) -> Result<(), AppError> {
     ctx.log(&format!("checking github releases for {}…", update::REPO));
-    update::updater().run(args, ctx.json, ctx.quiet)
+    update::updater().run_noting(args, ctx.json, ctx.quiet, &pk_cli_mcp::restart_note("pbca"))
 }

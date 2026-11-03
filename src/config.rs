@@ -29,7 +29,17 @@ pub struct Config {
 }
 
 pub fn store() -> ConfigStore {
-    ConfigStore::new(APP)
+    ConfigStore::new(APP).with_override(windows_path())
+}
+
+/// The shared store knows `XDG_CONFIG_HOME` and `HOME`, and Windows normally sets neither.
+fn windows_path() -> Option<std::path::PathBuf> {
+    let xdg = std::env::var_os("XDG_CONFIG_HOME").filter(|v| !v.is_empty());
+    if !cfg!(windows) || xdg.is_some() {
+        return None;
+    }
+    let home = std::env::home_dir()?;
+    Some(home.join(".config").join(APP).join("config.json"))
 }
 
 /// Load the saved preferences (a missing file is not an error).

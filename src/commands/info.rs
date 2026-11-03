@@ -18,7 +18,9 @@ pub fn run(ctx: &Ctx) -> Result<(), AppError> {
             method: "none".into(),
             login_hint: None,
         },
-        &["search", "parcel", "sales", "taxes", "building", "api"],
+        &[
+            "search", "parcel", "sales", "taxes", "building", "api", "mcp",
+        ],
     );
     // No domain profile is declared: `utility/v1` describes billing accounts,
     // and property records are not a utility. Adding a `property/v1` profile
