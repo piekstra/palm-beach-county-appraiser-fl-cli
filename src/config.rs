@@ -1,9 +1,8 @@
 //! Non-secret on-disk preferences, stored by the family config crate at
 //! `${XDG_CONFIG_HOME:-~/.config}/pbca/config.json`.
 //!
-//! This tool has **no credentials** — the county's parcel data is anonymous
-//! public records — so nothing here is ever a secret and the OS keychain is
-//! never touched. These are just defaults that save typing.
+//! The county's parcel data is anonymous public records, so nothing in this file
+//! is ever a secret. These are just defaults that save typing.
 
 use pk_cli_config::ConfigStore;
 use serde::{Deserialize, Serialize};

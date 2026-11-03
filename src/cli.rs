@@ -97,6 +97,10 @@ pub enum Command {
     /// Show building structure: year built, living area, and square footage.
     Building(PcnArg),
 
+    /// Serve read-only tools to Claude and other MCP clients over stdio, or
+    /// with --http on 127.0.0.1 for your own connector's tunnel.
+    Mcp(pk_cli_mcp::McpArgs),
+
     /// Machine-readable capability discovery (cli-info/v1).
     Info,
 

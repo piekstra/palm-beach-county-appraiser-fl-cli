@@ -1,0 +1,29 @@
+{
+  "propertyDetail": { "Location": "100 EXAMPLE ST" },
+  "salesInfo": [
+    { "SaleDate": "01/02/1999", "Price": "10", "Book": "00003", "Page": "0004", "SaleType": "QUIT CLAIM", "OwnerName": "ROE RICHARD" },
+    { "SaleDate": "01/01/2000", "Price": "100000", "Book": "00001", "Page": "0002", "SaleType": "WARRANTY DEED", "OwnerName": "DOE JANE" }
+  ],
+  "appraisalInfo": [
+    { "TaxYear": "1999", "ImprovementValue": "250000", "LandValue": "150000", "TotalMarketValue": "400000" },
+    { "TaxYear": "2000", "ImprovementValue": "300000", "LandValue": "200000", "TotalMarketValue": "500000" }
+  ],
+  "assessmentInfo": [
+    { "TaxYear": "2000", "TaxableValue": "300000", "ExemptionAmount": "50000", "AssessedValue": "350000" }
+  ],
+  "taxInfo": [
+    { "TaxYear": "2000", "AdValoremTax": "5000", "NonAdValoremTax": "1000", "TotalTaxValue": "6000" }
+  ],
+  "exemptionInfo": [
+    { "Description": "HOMESTEAD", "TaxYear": "2000", "ApplicantName": "DOE JANE", "SOHBaseYear": "1999" }
+  ],
+  "structuralDetails": {
+    "BuildingNumbers": ["1"],
+    "StructuralElements": [
+      { "ElementName": "Year Built", "ElementValue": "1990" },
+      { "ElementName": "Total Square Footage", "ElementValue": "2800" },
+      { "ElementName": "Area Under Air", "ElementValue": "2000" },
+      { "ElementName": "Exterior Wall 1", "ElementValue": "CB STUCCO" }
+    ]
+  }
+}

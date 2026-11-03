@@ -96,7 +96,7 @@ curl -s '.../FeatureServer/4/query?where=1%3D1&returnCountOnly=true&f=json'
 
 - **Errors arrive as HTTP 200.** A bad `where` returns
   `{"error":{"code":400,...}}` with a success status. Inspect the body; never
-  trust the status alone. (`client.rs::check_arcgis_error`.)
+  trust the status alone. (`pk-cli-arcgis` does this for every query.)
 - **`PRICE` is a string**; `SALE_DATE` / `Q_SALE_DATE` are **epoch
   milliseconds**. Convert both on parse.
 - **`PADDR3` is not a third street line** — it is a pre-formatted

@@ -66,7 +66,13 @@ impl Ctx {
     /// layer cannot provide (sale history, tax rolls, building structure).
     pub fn details(&self, pcn: &Pcn) -> Result<Details, AppError> {
         self.log(&format!("fetching the county detail page for {pcn}"));
-        details::fetch(self.api.http(), pcn)
+        details::fetch(self.api.http(), pcn).map_err(|e| match e {
+            // The page answers an unknown parcel with a 500, so only the layer can say which.
+            AppError::Upstream(_) if matches!(self.api.parcel(pcn.bare()), Ok(None)) => {
+                AppError::NotFound(format!("no parcel with control number {pcn}"))
+            }
+            other => other,
+        })
     }
 }
 

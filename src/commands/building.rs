@@ -6,7 +6,9 @@ use crate::formatter;
 
 pub fn run(ctx: &Ctx, raw_pcn: &str) -> Result<(), AppError> {
     let pcn = parse_pcn(raw_pcn)?;
-    let building = ctx.details(&pcn)?.building;
+    let details = ctx.details(&pcn)?;
+    details.require_building()?;
+    let building = details.building;
     // A parcel with no building is vacant land, not an error.
     formatter::print_building(&pcn.dashed(), building.as_ref(), ctx.json);
     Ok(())

@@ -7,6 +7,7 @@ use crate::formatter;
 pub fn run(ctx: &Ctx, raw_pcn: &str, limit: Option<u32>) -> Result<(), AppError> {
     let pcn = parse_pcn(raw_pcn)?;
     let details = ctx.details(&pcn)?;
+    details.require_rolls()?;
     let mut years = details.tax_years;
 
     // Already newest-first, so a limit keeps the most recent years.

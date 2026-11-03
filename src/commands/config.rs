@@ -1,7 +1,6 @@
 //! `config` — non-secret preferences (SPEC v1 §1.2).
 //!
-//! Nothing stored here is sensitive: this tool has no credentials, so the OS
-//! keychain is never involved.
+//! Nothing stored here is sensitive, and no secret ever goes in this file.
 
 use pk_cli_core::output;
 

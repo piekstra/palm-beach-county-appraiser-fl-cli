@@ -8,7 +8,8 @@ It's a thin, polite client over the county's own public data: the enterprise
 **ArcGIS** server that hosts the Property Appraiser's parcel layer, plus the
 appraiser's per-parcel detail page for the history that layer doesn't carry.
 All of it is anonymous public records — there is **no account, no password, and
-no API key** to configure, and nothing is ever written to your keychain.
+no API key** to configure. The keychain is touched only if you serve the tools to
+Claude on the web, for that server's own bearer token.
 
 Built to be **human- and agent-friendly**: every command has a `--json` mode and
 stable exit codes, so a person or a script can chain it into a pipeline.
@@ -23,7 +24,7 @@ cargo build --release        # binary at ./target/release/pbca
 cargo install --path .       # installs the `pbca` binary onto your PATH
 ```
 
-Requires a recent stable Rust toolchain.
+Requires Rust 1.89 or later.
 
 ## Quick start
 
@@ -71,8 +72,9 @@ pbca config path
 pbca config unset municipality
 ```
 
-Settings live in `~/.config/pbca/config.json`. None of it is secret — this tool
-has no credentials.
+Settings live in `${XDG_CONFIG_HOME:-~/.config}/pbca/config.json`; on Windows `~` is
+`%USERPROFILE%`. None of it is secret — reading the county's records takes no
+credentials.
 
 ## For scripts and agents
 
@@ -105,7 +107,7 @@ whether you're seeing everything:
 | 0 | success |
 | 1 | generic / unexpected error |
 | 2 | usage error (bad PCN, unknown config key, empty query) |
-| 3 | auth required — *never returned by this tool* |
+| 3 | `mcp --http` without a bearer token; nothing else here needs one |
 | 4 | not found (no such parcel) |
 | 5 | upstream error (county server down, or its page markup changed) |
 
@@ -121,6 +123,77 @@ pbca api GET '/PARCEL_INFO/FeatureServer/4/query?where=1%3D1&returnCountOnly=tru
 
 Paths resolve against the ArcGIS `Parcels` folder; absolute URLs pass through
 untouched.
+
+## Use with Claude
+
+`pbca mcp` serves four read-only tools to Claude over MCP. They read the same public records
+the commands do, with no account or key.
+
+| Tool | Answers |
+|---|---|
+| `pbca_search` | Which parcels match the start of an address or an owner's name |
+| `pbca_parcel` | One parcel's owners, values, homestead and last sale; on request its building |
+| `pbca_sales` | Every recorded sale of one parcel, newest first |
+| `pbca_taxes` | One parcel's values and total tax by year, and its exemptions |
+
+`pbca_parcel`, `pbca_sales` and `pbca_taxes` take a control number or a street address that
+singles one parcel out; an ambiguous address's error lists the candidates. A concise result
+leaves out a mailing address and an exemption's applicant, and the detailed form adds them.
+Raw `api` queries and bulk reads stay on the command line.
+
+**Claude Code.** Add the `palm-beach-county-appraiser-fl-cli` plugin from the
+[piekstra plugin marketplace](https://github.com/piekstra/claude-plugins):
+
+```console
+$ claude plugin marketplace add piekstra/claude-plugins
+$ claude plugin install palm-beach-county-appraiser-fl-cli@piekstra-plugins
+```
+
+or register the server yourself:
+
+```console
+$ claude mcp add pbca -- pbca mcp
+```
+
+**Claude Desktop.** Download `pbca-<version>.mcpb` from the
+[latest release](https://github.com/piekstra/palm-beach-county-appraiser-fl-cli/releases/latest)
+and open it. It asks for nothing and touches no keychain.
+
+Any other MCP client that launches a local server can run `pbca mcp`.
+
+Claude Desktop and launchd do not start from your shell, so they do not see an
+`XDG_CONFIG_HOME` set in a shell profile and read `~/.config`.
+
+**Claude on the web and mobile.** claude.ai reaches tools through a remote connector. `pbca`
+reads your saved municipality from your computer and makes its requests from there, so it
+serves the same tools from your computer to a connector you deploy into your own Cloudflare
+account:
+
+```console
+$ pbca mcp --new-token            # once: a bearer token, saved in the keychain and printed for the Worker
+$ pbca mcp --http --port 8771     # serve on 127.0.0.1 only
+```
+
+`--http` takes the token from `$PBCA_MCP_TOKEN` if it is set, and otherwise from the keychain.
+`pbca mcp --new-token --overwrite` replaces a saved one.
+The connector, [cli-common's `connector/`](https://github.com/piekstra/cli-common/tree/main/connector#tools-from-your-computer-home-modules),
+reaches that port through a Cloudflare Tunnel in your account; its README walks through the
+tunnel, the VPC service, a launchd agent that keeps the server running, and the
+`HOME_PBCA_TOKEN` secret, with the threat model. `--http` binds 127.0.0.1 only, refuses to
+start without the token, refuses any request whose `Host` is not loopback or that carries an
+`Origin`, and serves only read-only tools, which is all `pbca` has. Tool results pass through
+Cloudflare and reach Claude ([`SECURITY.md`](SECURITY.md)). While the computer sleeps, the
+tools answer that it is offline.
+
+After `pbca self-update`, restart the server: a running one keeps the old code, and its
+launchd agent restarts it only when it exits. Its start line names the version.
+
+```console
+$ launchctl kickstart -k gui/$(id -u)/com.piekstra.pbca-mcp-http
+```
+
+`self-update` does not reach a Claude Desktop extension, which runs its own copy. Install
+the new release's `.mcpb` too.
 
 ## Pairs with `lrfl`
 
@@ -148,7 +221,7 @@ the record is protected. What you do with output you've fetched is your call.
 ## Development
 
 ```sh
-make check        # fmt + clippy + tests
+make verify       # fmt + clippy + tests + smoke run of the release binary
 make build        # release build
 cargo test
 ```
