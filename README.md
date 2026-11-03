@@ -222,7 +222,7 @@ the record is protected. What you do with output you've fetched is your call.
 
 ```sh
 make verify       # fmt + clippy + tests + smoke run of the release binary
-make release      # release build
+make build        # release build
 cargo test
 ```
 

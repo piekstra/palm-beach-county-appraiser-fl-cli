@@ -44,6 +44,9 @@ struct Canned {
     rows: Vec<Value>,
     missing_parcel: bool,
     failure: Option<CliError>,
+    /// What the detail page answers, in place of the fixture.
+    page_failure: Option<CliError>,
+    page_model: Option<String>,
     asked_where: Mutex<Vec<String>>,
     asked_limit: Mutex<Vec<u32>>,
     asked_parcel: Mutex<Vec<String>>,
@@ -99,7 +102,13 @@ impl Source for Canned {
     fn details(&self, _: &Pcn) -> Result<Details, CliError> {
         self.fail()?;
         *self.detail_reads.lock().unwrap() += 1;
-        Ok(details())
+        if let Some(e) = &self.page_failure {
+            return Err(e.clone());
+        }
+        match &self.page_model {
+            Some(model) => details::parse(&format!("<script>var model = {model};</script>")),
+            None => Ok(details()),
+        }
     }
 }
 
@@ -273,6 +282,37 @@ fn search_pages_and_binds_its_cursor_to_its_filters() {
         json!({"query": "OTHER", "cursor": cursor}),
     ));
     assert!(text.starts_with("usage:"), "{text}");
+}
+
+/// A deep page asks the county for every row before it, so it is refused before asking.
+#[test]
+fn search_refuses_to_read_past_its_ceiling() {
+    let rows: Vec<Value> = (0..1_100u64)
+        .map(|i| row_at(12345678901234567 - i, "100 EXAMPLE ST"))
+        .collect();
+    let t = PbcaTools::new(Canned::with_rows(rows));
+    let mut cursor = None;
+    let mut pages = 0;
+    let text = loop {
+        let result = call(
+            &t,
+            SEARCH_TOOL,
+            json!({"query": "100", "limit": 100, "cursor": cursor}),
+        );
+        if result.is_error() {
+            break result.text().to_string();
+        }
+        pages += 1;
+        cursor = assert_fits(&t, SEARCH_TOOL, &result)["next_cursor"]
+            .as_str()
+            .map(str::to_string);
+        assert!(cursor.is_some(), "more than the ceiling matches");
+    };
+    assert!(text.starts_with("usage:"), "{text}");
+    assert!(text.contains("municipality"), "{text}");
+    assert_eq!(pages, 9, "the page that would read past 1,000 is refused");
+    let asked = t.source.asked_limit.lock().unwrap().clone();
+    assert!(asked.iter().all(|limit| *limit <= 1_000), "{asked:?}");
 }
 
 /// With no match the county is asked only to count.
@@ -469,6 +509,72 @@ fn taxes_concise_holds_back_the_applicant_and_detailed_adds_it() {
     assert_eq!(out["items"][0]["land_value"], "200000.00");
     assert_eq!(out["exemptions"][0]["applicant"], "DOE JANE");
     assert_eq!(out["exemptions"][0]["soh_base_year"], "1999");
+}
+
+/// The county answers an unknown control number on its detail page with a 500.
+#[test]
+fn an_unknown_parcel_on_the_detail_page_is_not_found_and_an_outage_stays_upstream() {
+    let down = || CliError::Upstream("the county property site returned HTTP 500".into());
+    let t = PbcaTools::new(Canned {
+        missing_parcel: true,
+        page_failure: Some(down()),
+        ..Canned::default()
+    });
+    for tool in [SALES_TOOL, TAXES_TOOL] {
+        let text = error_text(&call(&t, tool, json!({"parcel": PCN})));
+        assert!(text.starts_with("not_found:"), "{tool}: {text}");
+    }
+
+    let t = PbcaTools::new(Canned {
+        page_failure: Some(down()),
+        ..Canned::default()
+    });
+    for tool in [SALES_TOOL, TAXES_TOOL] {
+        let text = error_text(&call(&t, tool, json!({"parcel": PCN})));
+        assert!(text.starts_with("upstream:"), "{tool}: {text}");
+    }
+}
+
+/// An empty answer from a renamed section would be a false "no sales".
+#[test]
+fn a_renamed_section_is_upstream_and_a_present_empty_one_is_data() {
+    let renamed = |from: &str, to: &str| {
+        PbcaTools::new(Canned {
+            page_model: Some(fixture("detail_model.json").replace(from, to)),
+            ..Canned::default()
+        })
+    };
+    let text = error_text(&call(
+        &renamed("salesInfo", "saleHistory"),
+        SALES_TOOL,
+        json!({"parcel": PCN}),
+    ));
+    assert!(text.starts_with("upstream:"), "{text}");
+    let text = error_text(&call(
+        &renamed("taxInfo", "levies"),
+        TAXES_TOOL,
+        json!({"parcel": PCN}),
+    ));
+    assert!(text.starts_with("upstream:"), "{text}");
+    let text = error_text(&call(
+        &renamed("structuralDetails", "structure"),
+        PARCEL_TOOL,
+        json!({"parcel": PCN, "building": true}),
+    ));
+    assert!(text.starts_with("upstream:"), "{text}");
+
+    let empty = PbcaTools::new(Canned {
+        page_model: Some(
+            r#"{"salesInfo": [], "appraisalInfo": [], "assessmentInfo": [], "taxInfo": [],
+                "exemptionInfo": [], "structuralDetails": {}}"#
+                .into(),
+        ),
+        ..Canned::default()
+    });
+    let out = fits(&empty, SALES_TOOL, json!({"parcel": PCN}));
+    assert_eq!(out["returned"], 0);
+    let out = fits(&empty, TAXES_TOOL, json!({"parcel": PCN}));
+    assert_eq!(out["returned"], 0);
 }
 
 #[test]

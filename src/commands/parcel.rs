@@ -21,7 +21,9 @@ pub fn run(ctx: &Ctx, raw_pcn: &str, details: bool) -> Result<(), AppError> {
     // Building structure lives on the county's web page, not the ArcGIS layer,
     // so it costs a second request and is opt-in.
     if details {
-        parcel.building = ctx.details(&pcn)?.building;
+        let details = ctx.details(&pcn)?;
+        details.require_building()?;
+        parcel.building = details.building;
     }
 
     formatter::print_parcel(&parcel, ctx.json);

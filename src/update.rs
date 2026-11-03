@@ -10,8 +10,7 @@ pub const REPO: &str = "piekstra/palm-beach-county-appraiser-fl-cli";
 pub fn updater() -> Updater {
     Updater {
         repo: REPO.into(),
-        // The name inside the release archive, which on Windows is `pbca.exe`.
-        binary: format!("pbca{}", std::env::consts::EXE_SUFFIX),
+        binary: "pbca".into(),
         target: env!("BUILD_TARGET").into(),
         current: env!("CARGO_PKG_VERSION").into(),
     }

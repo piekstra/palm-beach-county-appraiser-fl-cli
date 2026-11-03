@@ -38,6 +38,9 @@ pub const TAXES_TOOL: &str = "pbca_taxes";
 
 /// How many candidates an ambiguous address names.
 const CANDIDATES: u32 = 5;
+/// The furthest one search reads into its matches. The county is asked for every row up to
+/// the page, so a deep page is a bulk read, which belongs on its export formats.
+const MAX_SEARCH_ROWS: usize = 1_000;
 
 /// What a tool needs from the county and from this computer. [`Live`] is the real one;
 /// the tests answer from scrubbed fixtures.
@@ -451,6 +454,12 @@ impl<S: Source> PbcaTools<S> {
                 municipality: municipality.as_deref(),
             },
         )?;
+        if page.wanted() > MAX_SEARCH_ROWS {
+            return Err(ToolError::usage(format!(
+                "a search reads at most its first {MAX_SEARCH_ROWS} matches"
+            ))
+            .with_fix("Narrow with municipality or a longer query"));
+        }
         let (where_clause, order_by) = build_query(&query, args.owner, municipality.as_deref());
         let total = self.source.count(&where_clause)?;
         let rows = if total == 0 {
@@ -472,6 +481,17 @@ impl<S: Source> PbcaTools<S> {
         })
     }
 
+    /// One parcel's detail page. The page answers an unknown parcel with a 500, so a failure
+    /// asks the layer which it was.
+    fn details(&self, pcn: &Pcn) -> Result<Details, ToolError> {
+        self.source.details(pcn).map_err(|e| match e {
+            CliError::Upstream(_) if matches!(self.source.parcel(pcn), Ok(None)) => {
+                ToolError::not_found(format!("no parcel has the control number {pcn}"))
+            }
+            other => other.into(),
+        })
+    }
+
     fn parcel(&self, args: Value) -> Result<ToolOutput, ToolError> {
         let args: ParcelArgs = parse_args(args)?;
         let pcn = resolve(&self.source, &args.parcel)?;
@@ -482,7 +502,9 @@ impl<S: Source> PbcaTools<S> {
             ToolError::upstream("the parcel layer returned a row with no parcel id")
         })?;
         if args.building {
-            parcel.building = self.source.details(&pcn)?.building;
+            let found = self.details(&pcn)?;
+            found.require_building()?;
+            parcel.building = found.building;
         }
         let detailed = args.response_format.unwrap_or_default().is_detailed();
         ToolOutput::new(&parcel_out(parcel, detailed))
@@ -498,7 +520,9 @@ impl<S: Source> PbcaTools<S> {
         )?;
         let pcn = resolve(&self.source, &args.parcel)?;
         let detailed = args.list.format().is_detailed();
-        let mut sales = self.source.details(&pcn)?.sales;
+        let found = self.details(&pcn)?;
+        found.require_sales()?;
+        let mut sales = found.sales;
         // ISO dates sort as text, and an undated sale sorts last.
         sales.sort_by(|a, b| b.date.cmp(&a.date));
         let items: Vec<SaleItem> = sales.into_iter().map(|s| sale_item(s, detailed)).collect();
@@ -518,7 +542,8 @@ impl<S: Source> PbcaTools<S> {
         )?;
         let pcn = resolve(&self.source, &args.parcel)?;
         let detailed = args.list.format().is_detailed();
-        let found = self.source.details(&pcn)?;
+        let found = self.details(&pcn)?;
+        found.require_rolls()?;
         let items: Vec<TaxItem> = found
             .tax_years
             .into_iter()
@@ -555,8 +580,7 @@ impl<S: Source> Toolset for PbcaTools<S> {
             "These are public records about any parcel in Palm Beach County, Florida, not only \
              the user's. Owner names are real people's, so use them for what the user asked \
              about. Amounts are USD decimal strings. Owner names are stored surname-first. A \
-             confidential true means Florida law shields that owner. The county's detail page \
-             is scraped, so a field it stops publishing goes missing rather than failing. \
+             confidential true means Florida law shields that owner. \
              Unofficial; not affiliated with the Property Appraiser or the county.",
         )
     }

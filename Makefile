@@ -5,10 +5,7 @@ CARGO := cargo
 
 .PHONY: build release test lint fmt fmt-check check smoke verify install
 
-build: SIGN_TARGET = target/debug/$(BIN)
-build:
-	$(CARGO) build
-	@$(SIGN)
+build: release
 
 release: SIGN_TARGET = target/release/$(BIN)
 release:

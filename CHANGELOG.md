@@ -13,4 +13,4 @@ All notable changes to `pbca` are documented here. Newest first. The project fol
   tarball, and publish only once every asset is there.
 - `self-update` says to restart a running `pbca mcp --http` and to install the new `.mcpb`.
 - The config follows `USERPROFILE` on Windows.
-- cli-common v0.25.0, up from v0.15.1. Rust 1.89 or later.
+- cli-common v0.26.0, up from v0.15.1. Rust 1.89 or later.

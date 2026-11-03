@@ -10,10 +10,16 @@
 //! so it changes only when the site's data model does, not when its markup is
 //! restyled.
 //!
-//! This is still a scrape, and it is treated as one: every field is optional and
-//! parsing is best-effort. A missing field yields `None` rather than failing the
-//! command. If the county renames something, fix the path and add a test — do
-//! not make a field required.
+//! This is still a scrape, and it is treated as one: every field inside a section
+//! is optional and parsing is best-effort. A missing field yields `None` rather than
+//! failing the command. If the county renames something, fix the path and add a test
+//! — do not make a field required.
+//!
+//! A missing **section** is another matter. Every real page lists each one, empty
+//! when it has nothing, so a section's absence means the county renamed it, and
+//! reading it as "no sales" would be a false answer. Its reader fails instead
+//! ([`Details::require_sales`] and its siblings), and a page with no section at all
+//! fails to parse.
 
 use pk_cli_core::Money;
 use serde::{Deserialize, Serialize};
@@ -101,6 +107,38 @@ pub struct Details {
     pub tax_years: Vec<TaxYear>,
     pub exemptions: Vec<Exemption>,
     pub building: Option<Building>,
+    sales_listed: bool,
+    rolls_listed: bool,
+    building_listed: bool,
+}
+
+/// A section's absence as the failure it is.
+fn listed(present: bool, what: &str) -> Result<(), AppError> {
+    if present {
+        Ok(())
+    } else {
+        Err(AppError::Upstream(format!(
+            "the county detail page no longer lists {what} where this tool looks — the site's \
+             data model has changed"
+        )))
+    }
+}
+
+impl Details {
+    /// Whether an empty [`Self::sales`] means no sales, as opposed to a renamed section.
+    pub fn require_sales(&self) -> Result<(), AppError> {
+        listed(self.sales_listed, "sales")
+    }
+
+    /// As [`Self::require_sales`], for [`Self::tax_years`].
+    pub fn require_rolls(&self) -> Result<(), AppError> {
+        listed(self.rolls_listed, "tax rolls")
+    }
+
+    /// As [`Self::require_sales`], for [`Self::building`].
+    pub fn require_building(&self) -> Result<(), AppError> {
+        listed(self.building_listed, "building details")
+    }
 }
 
 /// Fetch and parse the detail page for `pcn`.
@@ -128,11 +166,27 @@ pub fn fetch(client: &reqwest::blocking::Client, pcn: &Pcn) -> Result<Details, A
 /// Parse a detail page's HTML into [`Details`].
 pub fn parse(html: &str) -> Result<Details, AppError> {
     let model = extract_model(html)?;
+    let is_list = |key: &str| model.get(key).is_some_and(Value::is_array);
+    let sales_listed = is_list("salesInfo");
+    let rolls_listed = ["appraisalInfo", "assessmentInfo", "taxInfo"]
+        .iter()
+        .all(|key| is_list(key));
+    let building_listed = model.get("structuralDetails").is_some_and(Value::is_object);
+    if !sales_listed && !rolls_listed && !building_listed {
+        return Err(AppError::Upstream(
+            "the county detail page's `var model` block has none of the sections this tool \
+             reads — the site's data model has changed"
+                .into(),
+        ));
+    }
     Ok(Details {
         sales: sales(&model),
         tax_years: tax_years(&model),
         exemptions: exemptions(&model),
         building: building(&model),
+        sales_listed,
+        rolls_listed,
+        building_listed,
     })
 }
 
@@ -469,13 +523,45 @@ mod tests {
     }
 
     #[test]
-    fn missing_sections_yield_empty_not_an_error() {
-        // A vacant lot has no building and no sales; that is data, not failure.
-        let d = parse("<script>var model = {};</script>").unwrap();
+    fn empty_sections_are_data_and_not_an_error() {
+        // A vacant lot has no building and no sales; its page still lists the sections.
+        let d = parse(
+            r#"<script>var model = {"salesInfo": [], "appraisalInfo": [], "assessmentInfo": [],
+            "taxInfo": [], "exemptionInfo": [], "structuralDetails": {}};</script>"#,
+        )
+        .unwrap();
         assert!(d.sales.is_empty());
         assert!(d.tax_years.is_empty());
         assert!(d.exemptions.is_empty());
         assert!(d.building.is_none());
+        d.require_sales().unwrap();
+        d.require_rolls().unwrap();
+        d.require_building().unwrap();
+    }
+
+    #[test]
+    fn a_page_with_no_section_is_a_markup_change() {
+        let err = parse("<script>var model = {};</script>").unwrap_err();
+        assert_eq!(err.exit_code(), 5, "{err}");
+        assert!(err.to_string().contains("data model has changed"), "{err}");
+    }
+
+    #[test]
+    fn a_renamed_section_fails_its_reader_and_no_other() {
+        let renamed = page().replace("salesInfo", "saleHistory");
+        let d = parse(&renamed).unwrap();
+        let err = d.require_sales().unwrap_err();
+        assert_eq!(err.exit_code(), 5, "{err}");
+        assert!(err.to_string().contains("sales"), "{err}");
+        d.require_rolls().unwrap();
+        d.require_building().unwrap();
+
+        let d = parse(&page().replace("taxInfo", "levies")).unwrap();
+        assert_eq!(d.require_rolls().unwrap_err().exit_code(), 5);
+        d.require_sales().unwrap();
+
+        let d = parse(&page().replace("structuralDetails", "structure")).unwrap();
+        assert_eq!(d.require_building().unwrap_err().exit_code(), 5);
     }
 
     #[test]
