@@ -2,7 +2,7 @@
 name = "palm-beach-county-appraiser-fl"
 version = "0.1.1"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.88"
 description = "Look up Palm Beach County, FL property records — owner, parcel, values, exemptions, sales — from the command line. Public records, no credentials, agent-friendly, JSON-capable."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli"
