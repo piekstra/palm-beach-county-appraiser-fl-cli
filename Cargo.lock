@@ -1258,7 +1258,7 @@ dependencies = [
 
 [[package]]
 name = "palm-beach-county-appraiser-fl"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "clap_complete",
@@ -1303,8 +1303,8 @@ dependencies = [
 
 [[package]]
 name = "pk-cli-auth"
-version = "0.2.0"
-source = "git+https://github.com/piekstra/cli-common?tag=v0.2.0#230b70f46e765a69dcb78f44305c5186e6f85a16"
+version = "0.15.1"
+source = "git+https://github.com/piekstra/cli-common?tag=v0.15.1#1873d2a744dd026599d89f0fa46820b2fa77510f"
 dependencies = [
  "clap",
  "pk-cli-core",
@@ -1315,8 +1315,8 @@ dependencies = [
 
 [[package]]
 name = "pk-cli-config"
-version = "0.2.0"
-source = "git+https://github.com/piekstra/cli-common?tag=v0.2.0#230b70f46e765a69dcb78f44305c5186e6f85a16"
+version = "0.15.1"
+source = "git+https://github.com/piekstra/cli-common?tag=v0.15.1#1873d2a744dd026599d89f0fa46820b2fa77510f"
 dependencies = [
  "pk-cli-core",
  "serde",
@@ -1325,10 +1325,11 @@ dependencies = [
 
 [[package]]
 name = "pk-cli-core"
-version = "0.2.0"
-source = "git+https://github.com/piekstra/cli-common?tag=v0.2.0#230b70f46e765a69dcb78f44305c5186e6f85a16"
+version = "0.15.1"
+source = "git+https://github.com/piekstra/cli-common?tag=v0.15.1#1873d2a744dd026599d89f0fa46820b2fa77510f"
 dependencies = [
  "clap",
+ "libc",
  "reqwest",
  "serde",
  "serde_json",
@@ -1336,8 +1337,8 @@ dependencies = [
 
 [[package]]
 name = "pk-cli-http"
-version = "0.2.0"
-source = "git+https://github.com/piekstra/cli-common?tag=v0.2.0#230b70f46e765a69dcb78f44305c5186e6f85a16"
+version = "0.15.1"
+source = "git+https://github.com/piekstra/cli-common?tag=v0.15.1#1873d2a744dd026599d89f0fa46820b2fa77510f"
 dependencies = [
  "clap",
  "pk-cli-core",
@@ -1347,20 +1348,22 @@ dependencies = [
 
 [[package]]
 name = "pk-cli-secrets"
-version = "0.2.0"
-source = "git+https://github.com/piekstra/cli-common?tag=v0.2.0#230b70f46e765a69dcb78f44305c5186e6f85a16"
+version = "0.15.1"
+source = "git+https://github.com/piekstra/cli-common?tag=v0.15.1#1873d2a744dd026599d89f0fa46820b2fa77510f"
 dependencies = [
  "clap",
  "keyring",
  "pk-cli-core",
  "rpassword",
+ "serde",
+ "serde_json",
  "zeroize",
 ]
 
 [[package]]
 name = "pk-cli-selfupdate"
-version = "0.2.0"
-source = "git+https://github.com/piekstra/cli-common?tag=v0.2.0#230b70f46e765a69dcb78f44305c5186e6f85a16"
+version = "0.15.1"
+source = "git+https://github.com/piekstra/cli-common?tag=v0.15.1#1873d2a744dd026599d89f0fa46820b2fa77510f"
 dependencies = [
  "clap",
  "flate2",

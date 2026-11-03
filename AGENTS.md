@@ -118,7 +118,7 @@ commands, global `--json`, canonical DTOs (`auth-status/v1`, `self-update/v1`,
 
 - **Don't fork shared behavior.** Error/exit-code handling, output rendering,
   config storage, the HTTP client, and self-update come from the `pk-cli-*`
-  crates (tag-pinned git deps on cli-common, currently **v0.2.0**). If you need
+  crates (tag-pinned git deps on cli-common, currently **v0.15.1**). If you need
   a change there — or you're writing anything reusable across the family CLIs
   (fpl, xfin, lrfl, tojfl, …) — add it to cli-common, cut a tag, and bump the
   pin here. Never copy shared code into this repo.
