@@ -130,9 +130,9 @@ impl Details {
         listed(self.sales_listed, "sales")
     }
 
-    /// As [`Self::require_sales`], for [`Self::tax_years`].
+    /// As [`Self::require_sales`], for [`Self::tax_years`] and [`Self::exemptions`].
     pub fn require_rolls(&self) -> Result<(), AppError> {
-        listed(self.rolls_listed, "tax rolls")
+        listed(self.rolls_listed, "tax rolls and exemptions")
     }
 
     /// As [`Self::require_sales`], for [`Self::building`].
@@ -168,9 +168,14 @@ pub fn parse(html: &str) -> Result<Details, AppError> {
     let model = extract_model(html)?;
     let is_list = |key: &str| model.get(key).is_some_and(Value::is_array);
     let sales_listed = is_list("salesInfo");
-    let rolls_listed = ["appraisalInfo", "assessmentInfo", "taxInfo"]
-        .iter()
-        .all(|key| is_list(key));
+    let rolls_listed = [
+        "appraisalInfo",
+        "assessmentInfo",
+        "taxInfo",
+        "exemptionInfo",
+    ]
+    .iter()
+    .all(|key| is_list(key));
     let building_listed = model.get("structuralDetails").is_some_and(Value::is_object);
     if !sales_listed && !rolls_listed && !building_listed {
         return Err(AppError::Upstream(
@@ -556,9 +561,16 @@ mod tests {
         d.require_rolls().unwrap();
         d.require_building().unwrap();
 
-        let d = parse(&page().replace("taxInfo", "levies")).unwrap();
-        assert_eq!(d.require_rolls().unwrap_err().exit_code(), 5);
-        d.require_sales().unwrap();
+        for section in [
+            "appraisalInfo",
+            "assessmentInfo",
+            "taxInfo",
+            "exemptionInfo",
+        ] {
+            let d = parse(&page().replace(section, "renamedSection")).unwrap();
+            assert_eq!(d.require_rolls().unwrap_err().exit_code(), 5, "{section}");
+            d.require_sales().unwrap();
+        }
 
         let d = parse(&page().replace("structuralDetails", "structure")).unwrap();
         assert_eq!(d.require_building().unwrap_err().exit_code(), 5);

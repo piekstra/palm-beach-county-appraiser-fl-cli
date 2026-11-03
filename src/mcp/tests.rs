@@ -550,12 +550,19 @@ fn a_renamed_section_is_upstream_and_a_present_empty_one_is_data() {
         json!({"parcel": PCN}),
     ));
     assert!(text.starts_with("upstream:"), "{text}");
-    let text = error_text(&call(
-        &renamed("taxInfo", "levies"),
-        TAXES_TOOL,
-        json!({"parcel": PCN}),
-    ));
-    assert!(text.starts_with("upstream:"), "{text}");
+    for section in [
+        "appraisalInfo",
+        "assessmentInfo",
+        "taxInfo",
+        "exemptionInfo",
+    ] {
+        let text = error_text(&call(
+            &renamed(section, "renamedSection"),
+            TAXES_TOOL,
+            json!({"parcel": PCN}),
+        ));
+        assert!(text.starts_with("upstream:"), "{section}: {text}");
+    }
     let text = error_text(&call(
         &renamed("structuralDetails", "structure"),
         PARCEL_TOOL,
