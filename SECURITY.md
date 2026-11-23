@@ -23,7 +23,7 @@ result limit). The one secret it can hold is the bearer token of `pbca mcp
 That removes the usual credential-handling risks. What's left:
 
 - **No secrets or PII in the repo.** Tests and fixtures use synthetic parcels;
-  the pre-commit hook runs `gitleaks`; `.gitignore` blocks `*.html`, `*.csv`,
+  CI runs `gitleaks` on pull requests and pushes to main; `.gitignore` blocks `*.html`, `*.csv`,
   and `*.geojson` so a scraped page or bulk export can't be committed by
   accident.
 - **Injection into upstream queries.** Search terms are interpolated into an
