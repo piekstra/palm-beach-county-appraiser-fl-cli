@@ -9,7 +9,6 @@ and polite to the county's servers".
 ```sh
 git clone https://github.com/piekstra/palm-beach-county-appraiser-fl-cli
 cd palm-beach-county-appraiser-fl-cli
-git config core.hooksPath .githooks     # enables the pre-commit gitleaks + fmt guard
 make check                              # fmt + clippy + tests
 ```
 
@@ -27,8 +26,8 @@ CI runs the same three, plus `cargo audit`, `cargo deny`, and gitleaks.
 ## House rules
 
 - **No PII or real parcel data in the repo.** Tests use synthetic parcels
-  (`12345678901234567`, `DOE JANE`). This is the family's hard rule and the
-  pre-commit hook enforces the secret half of it. If you need a fixture, invent
+  (`12345678901234567`, `DOE JANE`). This is the family's hard rule and CI's
+  gitleaks job enforces the secret half of it. If you need a fixture, invent
   one — never paste a captured response.
 - **Don't fork shared behavior.** Errors, exit codes, output rendering, config,
   the HTTP client, and self-update come from the `pk-cli-*` crates in

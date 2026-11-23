@@ -105,7 +105,7 @@ These each cost a real debugging cycle. They're all covered by tests — if you
 
 - **No PII and no real parcel data in the repo.** Not in code, tests, fixtures,
   or commits. Tests use synthetic parcels (`12345678901234567`, `DOE JANE`).
-  `.githooks/pre-commit` runs gitleaks; `.gitignore` blocks `*.html`/`*.csv`/
+  CI runs gitleaks on every push and pull request; `.gitignore` blocks `*.html`/`*.csv`/
   `*.geojson` so a scraped page can't be committed by accident. A real PCN
   appears only when a user types one at runtime.
 - **Mirror the provider — don't impose privacy it doesn't.** This *is* the
