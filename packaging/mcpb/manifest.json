@@ -16,7 +16,7 @@
   "homepage": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli",
   "documentation": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli#use-with-claude",
   "support": "https://github.com/piekstra/palm-beach-county-appraiser-fl-cli/issues",
-  "license": "MIT OR Apache-2.0",
+  "license": "AGPL-3.0-only",
   "keywords": [
     "property",
     "parcel",
